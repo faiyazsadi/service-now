@@ -41,6 +41,7 @@ dependencies:
   firebase_database: ^10.0.5
   get: ^4.6.5
   fluttertoast: ^8.1.1
+  google_maps_flutter: ^2.2.1
 
 dev_dependencies:
   flutter_test:
