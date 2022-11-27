@@ -49,7 +49,7 @@ class _MySplashScreenState extends State<MySplashScreen> {
                 height: 10,
               ),
               const Text(
-                'Service Now Driver App',
+                'Service Now',
                 style: TextStyle(
                     fontSize: 20,
                     color: Colors.white,

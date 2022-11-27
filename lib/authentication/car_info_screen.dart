@@ -15,7 +15,7 @@ class _CarInfoScreenState extends State<CarInfoScreen> {
       TextEditingController();
   TextEditingController carColorTextEditingController = TextEditingController();
 
-  List<String> carTypesList = ['uber-x', 'uber-go', 'bike'];
+  List<String> carTypesList = ['Vehicle Service', 'Fuel Service'];
   String? selectedCarType;
 
   saveCarInto() {
@@ -31,7 +31,7 @@ class _CarInfoScreenState extends State<CarInfoScreen> {
         .child(currentFirebaseuser!.uid)
         .child("car_details")
         .set(driverCarInfoMap);
-    Fluttertoast.showToast(msg: 'Car details has been saved.');
+    Fluttertoast.showToast(msg: 'Provider details has been saved.');
     Navigator.push(
         context, MaterialPageRoute(builder: (c) => const MySplashScreen()));
   }
@@ -56,7 +56,7 @@ class _CarInfoScreenState extends State<CarInfoScreen> {
                 height: 10,
               ),
               const Text(
-                'Give Car Details',
+                'Give Provider Details',
                 style: TextStyle(
                     fontSize: 26,
                     color: Colors.grey,
@@ -68,8 +68,8 @@ class _CarInfoScreenState extends State<CarInfoScreen> {
                   color: Colors.grey,
                 ),
                 decoration: const InputDecoration(
-                  labelText: 'Car Model',
-                  hintText: 'Car Model',
+                  labelText: 'Provider Company Name',
+                  hintText: 'Provider Company Name',
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: Colors.grey),
                   ),
@@ -92,8 +92,8 @@ class _CarInfoScreenState extends State<CarInfoScreen> {
                   color: Colors.grey,
                 ),
                 decoration: const InputDecoration(
-                  labelText: 'Car Number',
-                  hintText: 'Car Number',
+                  labelText: 'Provider Company Address',
+                  hintText: 'Provider Company Address',
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: Colors.grey),
                   ),
@@ -116,8 +116,8 @@ class _CarInfoScreenState extends State<CarInfoScreen> {
                   color: Colors.grey,
                 ),
                 decoration: const InputDecoration(
-                  labelText: 'Car Color',
-                  hintText: 'Car Color',
+                  labelText: 'Provider Company Code',
+                  hintText: 'Provider Company Code',
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: Colors.grey),
                   ),
@@ -136,7 +136,7 @@ class _CarInfoScreenState extends State<CarInfoScreen> {
               ),
               DropdownButton(
                 hint: const Text(
-                  'Please Choose Car Type',
+                  'Please Choose Service Type',
                   style: TextStyle(fontSize: 14, color: Colors.grey),
                 ),
                 value: selectedCarType,
