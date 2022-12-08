@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:service_now/authentication/login_screen.dart';
 import 'package:service_now/authentication/sign_up_screen.dart';
@@ -21,6 +22,8 @@ class _MySplashScreenState extends State<MySplashScreen> {
         currentFirebaseuser = fAuth.currentUser;
         Navigator.push(
             context, MaterialPageRoute(builder: ((context) => MainScreen())));
+            DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
+            driversRef.child(currentFirebaseuser!.uid).update({"isActive": true});
       } else {
         Navigator.push(
             context, MaterialPageRoute(builder: ((context) => LoginScreen())));

@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 
@@ -144,6 +146,22 @@ void getCurrentLocation(BuildContext context) async {
     super.dispose();
   }
 
+  void getActiveUsers() async {
+    DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
+    // driversRef.onValue.listen((DatabaseEvent event) { 
+    //   final drivers = event.snapshot.value;
+      
+    // });
+    final snapshot = await driversRef.get();
+    final drivers = snapshot.value as Map<dynamic, dynamic>;
+    drivers.forEach((key, value) {
+      if(value["isActive"] == true) {
+        print(value["name"]);
+      }
+    });
+
+  }
+
   @override
   Widget build(BuildContext context) {
     return  Scaffold(
@@ -164,6 +182,7 @@ void getCurrentLocation(BuildContext context) async {
           child: const Icon(Icons.location_searching),
           onPressed: () {
             getCurrentLocation(context);
+            getActiveUsers();
           }),
     );
   }
