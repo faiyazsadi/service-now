@@ -58,9 +58,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (firebaseUser != null) {
       Map driverMap = {
         "id": firebaseUser.uid,
-        "nane": nameTextEditingController.text.trim(),
+        "name": nameTextEditingController.text.trim(),
         "email": emailTextEditingController.text.trim(),
-        "phone": phoneTextEditingController.text.trim()
+        "phone": phoneTextEditingController.text.trim(),
+        // "isActive" : false
       };
       DatabaseReference driversRef =
           FirebaseDatabase.instance.ref().child("drivers");
