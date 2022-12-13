@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
+import 'package:service_now/global/global.dart';
 
 class HomeTabPage extends StatefulWidget {
   const HomeTabPage({super.key});
@@ -29,7 +31,7 @@ class _HomeTabPageState extends State<HomeTabPage> {
   // void getCurrentLocation() async {
   //   if(currentLocation != null) return;
   //   Location location = Location();
-  //   location.getLocation().then( 
+  //ation.getLocation().then( 
   //     (location) {
   //       currentLocation = location;
   //     },
@@ -69,11 +71,14 @@ class _HomeTabPageState extends State<HomeTabPage> {
 //     super.initState();
 //   }
 
-  StreamSubscription? _locationSubscription;
+  StreamSubscription? _locationSubscription, _locationSubscriptionOthers;
   Location _locationTracker = Location();
   Marker? marker;
   Circle? circle;
   GoogleMapController? _controller;
+
+  Map<dynamic, Marker> markers = <dynamic, Marker>{};
+  Map<dynamic, Circle> circles = <dynamic, Circle>{};
 
   final CameraPosition initialLocation = const CameraPosition(
     target: LatLng(37.42796133580664, -122.085749655962),
@@ -85,7 +90,7 @@ class _HomeTabPageState extends State<HomeTabPage> {
     return byteData.buffer.asUint8List();
   }
 
-void updateMarkerAndCircle(LocationData newLocalData, Uint8List imageData) {
+void updateMarkerAndCircle(LocationData newLocalData, Uint8List imageData, var uid) {
     LatLng latlng = LatLng(newLocalData.latitude!, newLocalData.longitude!);
     setState(() {
       marker = Marker(
@@ -97,6 +102,7 @@ void updateMarkerAndCircle(LocationData newLocalData, Uint8List imageData) {
           flat: true,
           anchor: const Offset(0.5, 0.5),
           icon: BitmapDescriptor.fromBytes(imageData));
+
       circle = Circle(
           circleId: const CircleId("car"),
           radius: newLocalData.accuracy!,
@@ -104,16 +110,20 @@ void updateMarkerAndCircle(LocationData newLocalData, Uint8List imageData) {
           strokeColor: Colors.blue,
           center: latlng,
           fillColor: Colors.blue.withAlpha(70));
+
+      markers[uid] = marker!;
+      circles[uid] = circle!;
     });
   }
-  
+
 void getCurrentLocation(BuildContext context) async {
     try {
-
       Uint8List imageData = await getMarker(context);
       var location = await _locationTracker.getLocation();
+      updateMarkerAndCircle(location, imageData, currentFirebaseuser!.uid);
 
-      updateMarkerAndCircle(location, imageData);
+      DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
+      driversRef.child(currentFirebaseuser!.uid).update({"latitude": location.latitude, "longitude": location.longitude});
 
       if (_locationSubscription != null) {
         _locationSubscription!.cancel();
@@ -122,12 +132,13 @@ void getCurrentLocation(BuildContext context) async {
 
       _locationSubscription = _locationTracker.onLocationChanged.listen((newLocalData) {
         if (_controller != null) {
+          driversRef.child(currentFirebaseuser!.uid).update({"latitude": newLocalData.latitude, "longitude": newLocalData.longitude});
           _controller!.animateCamera(CameraUpdate.newCameraPosition(new CameraPosition(
               bearing: 192.8334901395799,
               target: LatLng(newLocalData.latitude!, newLocalData.longitude!),
               tilt: 0,
               zoom: 18.00)));
-          updateMarkerAndCircle(newLocalData, imageData);
+          updateMarkerAndCircle(newLocalData, imageData, currentFirebaseuser!.uid);
         }
       });
 
@@ -138,30 +149,113 @@ void getCurrentLocation(BuildContext context) async {
     }
   }
 
+
+  void updateOtherUserMarkerAndCircle(var latitude, var longitude, Uint8List imageData, var uid) {
+      LatLng latLng = LatLng(latitude, longitude);
+      print(latLng.latitude);
+      print(latLng.longitude);
+      setState(() {
+      marker = Marker(
+          markerId: const MarkerId("home"),
+          position: latLng,
+          // rotation: newLocalData.heading!,
+          draggable: false,
+          zIndex: 2,
+          flat: true,
+          anchor: const Offset(0.5, 0.5),
+          icon: BitmapDescriptor.fromBytes(imageData));
+
+      circle = Circle(
+          circleId: const CircleId("car"),
+          // radius: latLng.accuracy,
+          zIndex: 1,
+          strokeColor: Colors.blue,
+          center: latLng,
+          fillColor: Colors.blue.withAlpha(70));
+
+      markers[uid] = marker!;
+      circles[uid] = circle!;
+    });
+    print("######################");
+    print(markers.length);
+    print("==========================================");
+  }
+
+  
+
+  void getOtherUsers(BuildContext context, var userID) async {
+    try {
+    Uint8List imageData = await getMarker(context);
+    DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
+    final snapshot = await driversRef.child(userID).get();
+    final drivers = snapshot.value as Map<dynamic, dynamic>;
+
+    var latitude, longitude;
+    drivers.forEach((key, value) async {
+    if(key == "latitude") {
+      latitude = value;
+    } else if(key == "longitude") {
+      longitude = value;
+    }
+    });   
+
+    if (_locationSubscriptionOthers != null) {
+      _locationSubscriptionOthers!.cancel();
+    }
+
+    _locationSubscriptionOthers = _locationTracker.onLocationChanged.listen((newLocalData) async {
+      if (_controller != null) {
+        final snapshot = await driversRef.child(userID).get();
+        final drivers = snapshot.value as Map<dynamic, dynamic>;
+        drivers.forEach((key, value) async {
+        if(key == "latitude") {
+          latitude = value;
+        } else if(key == "longitude") {
+          longitude = value;
+        }
+        });
+        // _controller!.animateCamera(CameraUpdate.newCameraPosition(new CameraPosition(
+        //     bearing: 192.8334901395799,
+        //     target: LatLng(latitude, longitude),
+        //     tilt: 0,
+        //     zoom: 18.00)));
+        updateOtherUserMarkerAndCircle(latitude, longitude, imageData, userID);
+      }
+    });
+
+    } on PlatformException catch (e) {
+      if (e.code == 'PERMISSION_DENIED') {
+        debugPrint("Permission Denied");
+      }
+    }
+  }
+
+  void getActiveUsers(BuildContext context) async {
+    DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
+    final snapshot = await driversRef.get();
+    final drivers = snapshot.value as Map<dynamic, dynamic>;
+    drivers.forEach((key, value) async {
+      if(value["isActive"] == true) {
+        if(value["id"] != currentFirebaseuser!.uid) {
+          print("XXXXXXXXXXXXXXXXXXXXXXXXX");
+          print(value["id"]);
+          getOtherUsers(context, value["id"]);
+        } 
+      }
+    });
+  }
+
+
   @override
   void dispose() {
     if (_locationSubscription != null) {
       _locationSubscription!.cancel();
     }
+    if (_locationSubscriptionOthers != null) {
+      _locationSubscriptionOthers!.cancel();
+    }
     super.dispose();
   }
-
-  void getActiveUsers() async {
-    DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
-    // driversRef.onValue.listen((DatabaseEvent event) { 
-    //   final drivers = event.snapshot.value;
-      
-    // });
-    final snapshot = await driversRef.get();
-    final drivers = snapshot.value as Map<dynamic, dynamic>;
-    drivers.forEach((key, value) {
-      if(value["isActive"] == true) {
-        print(value["name"]);
-      }
-    });
-
-  }
-
   @override
   Widget build(BuildContext context) {
     return  Scaffold(
@@ -171,18 +265,20 @@ void getCurrentLocation(BuildContext context) async {
       body: GoogleMap(
         mapType: MapType.hybrid,
         initialCameraPosition: initialLocation,
-        markers: Set.of((marker != null) ? [marker!] : []),
-        circles: Set.of((circle != null) ? [circle!] : []),
         onMapCreated: (GoogleMapController controller) {
           _controller = controller;
         },
+        // markers: Set.of((marker != null) ? [marker!] : []),
+        // circles: Set.of((circle != null) ? [circle!] : []),
 
+        markers: Set<Marker>.of(markers.values),
+        circles: Set<Circle>.of(circles.values),
       ),
       floatingActionButton: FloatingActionButton(
           child: const Icon(Icons.location_searching),
           onPressed: () {
             getCurrentLocation(context);
-            getActiveUsers();
+            getActiveUsers(context);
           }),
     );
   }

@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:location/location.dart';
 import 'package:service_now/authentication/car_info_screen.dart';
 import 'package:service_now/global/global.dart';
 import 'package:service_now/widgets/progress_dialog.dart';
@@ -61,7 +62,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
         "name": nameTextEditingController.text.trim(),
         "email": emailTextEditingController.text.trim(),
         "phone": phoneTextEditingController.text.trim(),
-        "isActive" : false
+        "isActive": false,
+        "latitude": 123,
+        "longitude": 123
       };
       DatabaseReference driversRef =
           FirebaseDatabase.instance.ref().child("drivers");
