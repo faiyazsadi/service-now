@@ -95,7 +95,7 @@ void updateMarkerAndCircle(LocationData newLocalData, Uint8List imageData, var u
     LatLng latlng = LatLng(newLocalData.latitude!, newLocalData.longitude!);
     setState(() {
       marker = Marker(
-          markerId: const MarkerId("home"),
+          markerId: MarkerId(uid),
           position: latlng,
           rotation: newLocalData.heading!,
           draggable: false,
@@ -105,7 +105,7 @@ void updateMarkerAndCircle(LocationData newLocalData, Uint8List imageData, var u
           icon: BitmapDescriptor.fromBytes(imageData));
 
       circle = Circle(
-          circleId: const CircleId("car"),
+          circleId: CircleId(uid),
           radius: newLocalData.accuracy!,
           zIndex: 1,
           strokeColor: Colors.blue,
@@ -126,6 +126,9 @@ void getCurrentLocation(BuildContext context) async {
       DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
       driversRef.child(currentFirebaseuser!.uid).update({"latitude": location.latitude, "longitude": location.longitude});
 
+      DatabaseReference userConnection = FirebaseDatabase.instance.ref().child("drivers/${currentFirebaseuser!.uid}/isActive");
+      userConnection.onDisconnect().set(false);
+
       if (_locationSubscription != null) {
         _locationSubscription!.cancel();
       }
@@ -134,6 +137,8 @@ void getCurrentLocation(BuildContext context) async {
       _locationSubscription = _locationTracker.onLocationChanged.listen((newLocalData) {
         if (_controller != null) {
           driversRef.child(currentFirebaseuser!.uid).update({"latitude": newLocalData.latitude, "longitude": newLocalData.longitude});
+          DatabaseReference userConnection = FirebaseDatabase.instance.ref().child("drivers/${currentFirebaseuser!.uid}/isActive");
+          userConnection.onDisconnect().set(false);
           _controller!.animateCamera(CameraUpdate.newCameraPosition(new CameraPosition(
               bearing: 192.8334901395799,
               target: LatLng(newLocalData.latitude!, newLocalData.longitude!),
