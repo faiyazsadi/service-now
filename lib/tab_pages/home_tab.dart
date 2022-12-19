@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -149,103 +150,63 @@ void getCurrentLocation(BuildContext context) async {
     }
   }
 
-
-  void updateOtherUserMarkerAndCircle(var latitude, var longitude, Uint8List imageData, var uid) {
-      LatLng latLng = LatLng(latitude, longitude);
-      print(latLng.latitude);
-      print(latLng.longitude);
-      setState(() {
-      marker = Marker(
-          markerId: const MarkerId("home"),
-          position: latLng,
-          // rotation: newLocalData.heading!,
-          draggable: false,
-          zIndex: 2,
-          flat: true,
-          anchor: const Offset(0.5, 0.5),
-          icon: BitmapDescriptor.fromBytes(imageData));
-
-      circle = Circle(
-          circleId: const CircleId("car"),
-          // radius: latLng.accuracy,
-          zIndex: 1,
-          strokeColor: Colors.blue,
-          center: latLng,
-          fillColor: Colors.blue.withAlpha(70));
-
-      markers[uid] = marker!;
-      circles[uid] = circle!;
-    });
-    print("######################");
-    print(markers.length);
-    print("==========================================");
-  }
-
-  
-
-  void getOtherUsers(BuildContext context, var userID) async {
-    try {
-    Uint8List imageData = await getMarker(context);
-    DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
-    final snapshot = await driversRef.child(userID).get();
-    final drivers = snapshot.value as Map<dynamic, dynamic>;
-
-    var latitude, longitude;
-    drivers.forEach((key, value) async {
-    if(key == "latitude") {
-      latitude = value;
-    } else if(key == "longitude") {
-      longitude = value;
-    }
-    });   
-
+void getActiveUsers(BuildContext context) async {
+  try {
     if (_locationSubscriptionOthers != null) {
       _locationSubscriptionOthers!.cancel();
     }
-
     _locationSubscriptionOthers = _locationTracker.onLocationChanged.listen((newLocalData) async {
-      if (_controller != null) {
-        final snapshot = await driversRef.child(userID).get();
+      if(_controller != null) {
+        DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
+        final snapshot = await driversRef.get();
         final drivers = snapshot.value as Map<dynamic, dynamic>;
-        drivers.forEach((key, value) async {
-        if(key == "latitude") {
-          latitude = value;
-        } else if(key == "longitude") {
-          longitude = value;
-        }
+        drivers.forEach((key, value) async { 
+          if(value["isActive"] == true) {
+            var uid = value["id"];
+            if(value["id"] != currentFirebaseuser!.uid) { 
+              // print("===============================");
+              // print("uid: " + uid);
+              // print("===============================");
+              Uint8List imageData = await getMarker(context);
+              var latitude = value["latitude"];
+              var longitude = value["longitude"];
+              LatLng latLng = LatLng(latitude, longitude);
+              setState(() {
+                print(uid);
+                print("==========================");
+                var m = Marker(
+                    markerId: MarkerId(uid),
+                    position: latLng,
+                    // rotation: newLocalData.heading!,
+                    draggable: false,
+                    zIndex: 2,
+                    flat: true,
+                    anchor: const Offset(0.5, 0.5),
+                    icon: BitmapDescriptor.fromBytes(imageData));
+                var c = Circle(
+                    circleId: CircleId(uid),
+                    // radius: latLng.accuracy,
+                    zIndex: 1,
+                    strokeColor: Colors.blue,
+                    center: latLng,
+                    fillColor: Colors.blue.withAlpha(70));
+
+                markers[uid] = m;
+                circles[uid] = c;
+              });
+            }
+          }
         });
-        // _controller!.animateCamera(CameraUpdate.newCameraPosition(new CameraPosition(
-        //     bearing: 192.8334901395799,
-        //     target: LatLng(latitude, longitude),
-        //     tilt: 0,
-        //     zoom: 18.00)));
-        updateOtherUserMarkerAndCircle(latitude, longitude, imageData, userID);
       }
     });
-
-    } on PlatformException catch (e) {
-      if (e.code == 'PERMISSION_DENIED') {
-        debugPrint("Permission Denied");
-      }
+  } on PlatformException catch (e) {
+    if (e.code == 'PERMISSION_DENIED') {
+      debugPrint("Permission Denied");
     }
   }
-
-  void getActiveUsers(BuildContext context) async {
-    DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
-    final snapshot = await driversRef.get();
-    final drivers = snapshot.value as Map<dynamic, dynamic>;
-    drivers.forEach((key, value) async {
-      if(value["isActive"] == true) {
-        if(value["id"] != currentFirebaseuser!.uid) {
-          print("XXXXXXXXXXXXXXXXXXXXXXXXX");
-          print(value["id"]);
-          getOtherUsers(context, value["id"]);
-        } 
-      }
-    });
-  }
-
-
+  
+}
+  
   @override
   void dispose() {
     if (_locationSubscription != null) {
