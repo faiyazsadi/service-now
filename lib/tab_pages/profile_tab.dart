@@ -20,7 +20,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
         ),
         onPressed: () {
           DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
-            driversRef.child(currentFirebaseuser!.uid).update({"isActive": false});
+          driversRef.child(currentFirebaseuser!.uid).update({"isActive": false});
           fAuth.signOut();
           Navigator.push(
               context,

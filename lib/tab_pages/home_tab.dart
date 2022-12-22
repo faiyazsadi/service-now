@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:elegant_notification/elegant_notification.dart';
+import 'package:elegant_notification/resources/arrays.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
@@ -73,13 +75,17 @@ class _HomeTabPageState extends State<HomeTabPage> {
 //   }
 
   StreamSubscription? _locationSubscription, _locationSubscriptionOthers;
-  Location _locationTracker = Location();
+  final Location _locationTracker = Location();
   Marker? marker;
   Circle? circle;
   GoogleMapController? _controller;
 
   Map<dynamic, Marker> markers = <dynamic, Marker>{};
   Map<dynamic, Circle> circles = <dynamic, Circle>{};
+
+  var currSnapshot;
+  var prevSnapshot;
+
 
   final CameraPosition initialLocation = const CameraPosition(
     target: LatLng(37.42796133580664, -122.085749655962),
@@ -211,7 +217,24 @@ void getActiveUsers(BuildContext context) async {
   }
   
 }
-  
+void notifyActiveDrivers() async {
+  DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
+  final snapshot = await driversRef.get();
+  final drivers = snapshot.value as Map<dynamic, dynamic>;
+  drivers.forEach((key, value) async { 
+    if(value["id"] != currentFirebaseuser!.uid && value["isActive"] == true) {
+      print(value["id"]);
+      DateTime time = DateTime.now();
+      await driversRef.child(value["id"]).update({"request_from": currentFirebaseuser!.uid});
+      await driversRef.child(value["id"]).update({"request_time": time.toString()});
+    }
+  });
+}
+  @override 
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+  }
   @override
   void dispose() {
     if (_locationSubscription != null) {
@@ -240,12 +263,32 @@ void getActiveUsers(BuildContext context) async {
         markers: Set<Marker>.of(markers.values),
         circles: Set<Circle>.of(circles.values),
       ),
-      floatingActionButton: FloatingActionButton(
-          child: const Icon(Icons.location_searching),
-          onPressed: () {
-            getCurrentLocation(context);
-            getActiveUsers(context);
-          }),
+      
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Row(
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                notifyActiveDrivers();
+              },
+              child: const Text('Request Help'),
+              style: ElevatedButton.styleFrom(
+                  // icon: 
+                  backgroundColor: Colors.deepPurple[700],
+            ),
+            ),
+            SizedBox(width: 200),
+            FloatingActionButton(
+              child: const Icon(Icons.location_searching),
+              onPressed: () {
+                getCurrentLocation(context);
+                getActiveUsers(context);
+              }
+            ),
+          ],
+        ),
+      )
     );
   }
 }
