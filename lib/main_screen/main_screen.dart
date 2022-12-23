@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:elegant_notification/elegant_notification.dart';
 import 'package:elegant_notification/resources/arrays.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -10,18 +12,36 @@ import 'package:service_now/tab_pages/rating_tab.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
-
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen>
-    with SingleTickerProviderStateMixin {
+class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateMixin {
   TabController? tabController;
   int selectedIndex = 0;
   onItemClicked(int index) {
     selectedIndex = index;
     tabController!.index = selectedIndex;
+  }
+  // 
+  var myLatitude, myLongitude;
+  var userLatitude, userLongitude;
+  var changedScreen = false;
+
+  Future<void> getUserLocation() async {
+      DatabaseReference requestRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("request_from");
+      final request_from = await requestRef.get();
+      DatabaseReference latRef = FirebaseDatabase.instance.ref().child("drivers").child(request_from.value.toString()).child("latitude");
+      DatabaseReference lonRef = FirebaseDatabase.instance.ref().child("drivers").child(request_from.value.toString()).child("longitude");
+      final lat = await latRef.get();
+      final lon = await lonRef.get();
+      sleep(Duration(milliseconds: 1000));
+      userLatitude = lat.value;
+      userLongitude = lon.value;
+      print("=====================");
+      print(userLatitude);
+      print(userLongitude);
+      print("=====================");
   }
   void getNotification(BuildContext context, var userName) {
     ElegantNotification.info(
@@ -36,9 +56,37 @@ class _MainScreenState extends State<MainScreen>
       action: Row(
         children: [
           ElevatedButton(
-            onPressed: () { 
-              print("WORKED");
-            },
+            onPressed: () async { 
+              // getUserLocation();
+              DatabaseReference mylatRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("latitude");
+              DatabaseReference mylonRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("longitude");
+              final mylat = await mylatRef.get();
+              final mylon = await mylonRef.get().then((mylon) => {
+                myLatitude = mylat.value,
+                myLongitude = mylon.value
+              });
+
+              DatabaseReference requestRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("request_from");
+              final request_from = await requestRef.get();
+
+              DatabaseReference latRef = FirebaseDatabase.instance.ref().child("drivers").child(request_from.value.toString()).child("latitude");
+              DatabaseReference lonRef = FirebaseDatabase.instance.ref().child("drivers").child(request_from.value.toString()).child("longitude");
+              final lat = await latRef.get();
+              final lon = await lonRef.get().then((lon) => {
+                userLatitude = lat.value,
+                userLongitude = lon.value,
+                changedScreen = true,
+                Navigator.push(context, MaterialPageRoute(builder: (c) => HomeTabPage(
+                  myLatitude: myLatitude,
+                  myLongitude: myLongitude,
+                  userLatitude: userLatitude,
+                  userLongitude: userLongitude,
+                  changedScreen: changedScreen)))
+                  .then((value) => changedScreen = false)
+              });
+              
+            }
+            ,
             style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
             ),
@@ -76,7 +124,7 @@ class _MainScreenState extends State<MainScreen>
       final snapshot = await driversRef.get();
       if(firstTime) {
         firstTime = false;
-        print("FIRST TIME?????????");
+        // print("FIRST TIME");
       } else {
         DatabaseReference requestRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("request_from");
         final request_from = await requestRef.get();
@@ -101,8 +149,8 @@ class _MainScreenState extends State<MainScreen>
       body: TabBarView(
         physics: NeverScrollableScrollPhysics(),
         controller: tabController,
-        children: const [
-          HomeTabPage(),
+        children: [
+          HomeTabPage(myLatitude: myLatitude, myLongitude: myLongitude, userLatitude: userLatitude, userLongitude: userLongitude, changedScreen: changedScreen),
           EarningsTabPage(),
           RatingTabPage(),
           ProfileTabPage(),

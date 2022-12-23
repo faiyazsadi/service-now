@@ -1,96 +1,71 @@
-import 'dart:async';
-import 'dart:io';
+// ignore_for_file: prefer_typing_uninitialized_variables
 
-import 'package:elegant_notification/elegant_notification.dart';
-import 'package:elegant_notification/resources/arrays.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:service_now/global/global.dart';
 
-class HomeTabPage extends StatefulWidget {
-  const HomeTabPage({super.key});
 
+class HomeTabPage extends StatefulWidget {
+  final myLatitude, myLongitude, userLatitude, userLongitude;
+  final bool changedScreen;
+  const HomeTabPage({super.key, required this.myLatitude, required this.myLongitude, required this.userLatitude, required this.userLongitude, required this.changedScreen});
   @override
   State<HomeTabPage> createState() => _HomeTabPageState();
 }
 
 class _HomeTabPageState extends State<HomeTabPage> {
-  // Completer<GoogleMapController> _controllerGooleMap = Completer();
-  // GoogleMapController? newGoogleMapController;
-
-
-  // static const LatLng sourceLocation = LatLng(37.4221, -122.0841);
-  // static const LatLng destinationLocation = LatLng(37.4116, -122.0713);
-
-  // List<LatLng> polyLineCoordinates = [];
-  // static LocationData? currentLocation;
-
-  // void getCurrentLocation() async {
-  //   if(currentLocation != null) return;
-  //   Location location = Location();
-  //ation.getLocation().then( 
-  //     (location) {
-  //       currentLocation = location;
-  //     },
-  //   );
-  //   setState(() {
-  //   });
-  //   sleep(Duration(milliseconds: 200));
-    //GoogleMapController googleMapController = await _controllerGooleMap.future;
-    //location.onLocationChanged.listen((newLocation) {
-      //currentLocation = newLocation;
-      //googleMapController.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(target: LatLng(newLocation.latitude!, newLocation.longitude!),),),);
-      //setState(() {});
-    //},);
-  // }
-
-//   void getPolyPoints() async {
-//     PolylinePoints polylinePoints = PolylinePoints();
-//     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-//       key, 
-//       PointLatLng(sourceLocation.latitude, sourceLocation.longitude),
-//       PointLatLng(destinationLocation.latitude, destinationLocation.longitude),
-//     );
-//     if(result.points.isNotEmpty) {
-//       result.points.forEach((PointLatLng pointLatLng) {
-//           polyLineCoordinates.add(LatLng(pointLatLng.latitude, pointLatLng.longitude));
-//       });
-//       setState(() {});
-//     }
-//   }
-
-// @override
-//   void initState() {
-//     // TODO: implement initState
-//     getCurrentLocation();
-//     // sleep(const Duration(milliseconds: 200));
-//     getPolyPoints();
-//     super.initState();
-//   }
-
   StreamSubscription? _locationSubscription, _locationSubscriptionOthers;
   final Location _locationTracker = Location();
   Marker? marker;
   Circle? circle;
   GoogleMapController? _controller;
-
   Map<dynamic, Marker> markers = <dynamic, Marker>{};
   Map<dynamic, Circle> circles = <dynamic, Circle>{};
 
-  var currSnapshot;
-  var prevSnapshot;
+  PolylinePoints polylinePoints = PolylinePoints();
+  Map<PolylineId, Polyline> polylines = {};
+  List<LatLng> polylineCoordinates = [];
 
+  addPolyLine() {
+    PolylineId id = const PolylineId("poly");
+    Polyline polyline = Polyline(
+        polylineId: id,
+        color: Colors.red,
+        points: polylineCoordinates
+    );
+    polylines[id] = polyline;
+    setState((){});
+ }
+ void makeLines(PointLatLng myLocation, PointLatLng userLocation) async {
+     await polylinePoints
+          .getRouteBetweenCoordinates(
+            // 'GOOGLE MAP API KEY'
+            // PointLatLng(6.2514, 80.7642), //Starting LATLANG
+            // PointLatLng(6.9271, 79.8612), //End LATLANG
+             'AIzaSyB3UWDair3TJS0xnJviTeo3wasW1TUvLdI',
+              myLocation,
+              userLocation,
+              travelMode: TravelMode.driving,
+    ).then((value) {
+        value.points.forEach((PointLatLng point) {
+           polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+       });
+   }).then((value) {
+      addPolyLine();
+   });
+ }
 
   final CameraPosition initialLocation = const CameraPosition(
     target: LatLng(37.42796133580664, -122.085749655962),
     zoom: 14.4746,
   );
+  
 
   Future<Uint8List> getMarker(BuildContext context) async {
     ByteData byteData = await DefaultAssetBundle.of(context).load("images/car_icon.png");
@@ -128,10 +103,9 @@ void getCurrentLocation(BuildContext context) async {
       Uint8List imageData = await getMarker(context);
       var location = await _locationTracker.getLocation();
       updateMarkerAndCircle(location, imageData, currentFirebaseuser!.uid);
-
       DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
       driversRef.child(currentFirebaseuser!.uid).update({"latitude": location.latitude, "longitude": location.longitude});
-
+      
       DatabaseReference userConnection = FirebaseDatabase.instance.ref().child("drivers/${currentFirebaseuser!.uid}/isActive");
       userConnection.onDisconnect().set(false);
 
@@ -145,7 +119,7 @@ void getCurrentLocation(BuildContext context) async {
           driversRef.child(currentFirebaseuser!.uid).update({"latitude": newLocalData.latitude, "longitude": newLocalData.longitude});
           DatabaseReference userConnection = FirebaseDatabase.instance.ref().child("drivers/${currentFirebaseuser!.uid}/isActive");
           userConnection.onDisconnect().set(false);
-          _controller!.animateCamera(CameraUpdate.newCameraPosition(new CameraPosition(
+          _controller!.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
               bearing: 192.8334901395799,
               target: LatLng(newLocalData.latitude!, newLocalData.longitude!),
               tilt: 0,
@@ -183,8 +157,8 @@ void getActiveUsers(BuildContext context) async {
               var longitude = value["longitude"];
               LatLng latLng = LatLng(latitude, longitude);
               setState(() {
-                print(uid);
-                print("==========================");
+                // print(uid);
+                // print("==========================");
                 var m = Marker(
                     markerId: MarkerId(uid),
                     position: latLng,
@@ -231,9 +205,32 @@ void notifyActiveDrivers() async {
   });
 }
   @override 
-  void initState() {
-    // TODO: implement initState
+  initState() {
     super.initState();
+    getCurrentLocation(context);
+    getActiveUsers(context);
+
+    // print("===================================");
+    // print(widget.latitude);
+    // print(widget.longitude);
+    // print(widget.changedScreen);
+    // print("===================================");
+
+    // print("###############################");
+    // print(myLatitude);
+    // print(myLongitude);
+    // print("###############################");
+
+    if(widget.changedScreen == true) {
+      PointLatLng myLocation = PointLatLng(widget.myLatitude, widget.myLongitude);
+      PointLatLng userLocation = PointLatLng(widget.userLatitude, widget.userLongitude);
+      makeLines(myLocation, userLocation);
+      
+      // PointLatLng userLocation = PointLatLng(22.8988367, 89.50415);
+      // PointLatLng myLocation = PointLatLng(22.8988367, 89.50415);
+      
+    }
+    
   }
   @override
   void dispose() {
@@ -262,6 +259,7 @@ void notifyActiveDrivers() async {
 
         markers: Set<Marker>.of(markers.values),
         circles: Set<Circle>.of(circles.values),
+        polylines: Set<Polyline>.of(polylines.values),
       ),
       
       floatingActionButton: Padding(
