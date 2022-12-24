@@ -68,8 +68,11 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
               DatabaseReference requestRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("request_from");
               final request_from = await requestRef.get();
 
-              DatabaseReference latRef = FirebaseDatabase.instance.ref().child("drivers").child(request_from.value.toString()).child("latitude");
-              DatabaseReference lonRef = FirebaseDatabase.instance.ref().child("drivers").child(request_from.value.toString()).child("longitude");
+              DatabaseReference latRef = FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString()).child("latitude");
+              DatabaseReference lonRef = FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString()).child("longitude");
+              DatabaseReference driverRef = FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString());
+              driverRef.update({"AcceptedBy": currentFirebaseuser!.uid});
+              driverRef.update({"AcceptTime": DateTime.now().toString()});
               final lat = await latRef.get();
               final lon = await lonRef.get().then((lon) => {
                 userLatitude = lat.value,
@@ -83,7 +86,6 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
                   changedScreen: changedScreen)))
                   .then((value) => changedScreen = false)
               });
-              
             }
             ,
             style: ElevatedButton.styleFrom(
@@ -127,7 +129,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
       } else {
         DatabaseReference requestRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("request_from");
         final request_from = await requestRef.get();
-        DatabaseReference userRef = FirebaseDatabase.instance.ref().child("drivers").child(request_from.value.toString()).child("name");
+        DatabaseReference userRef = FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString()).child("name");
         final userName = await userRef.get();
         getNotification(context, userName.value.toString());
         print(userName.value);

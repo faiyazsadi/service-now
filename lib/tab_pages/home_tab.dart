@@ -140,7 +140,7 @@ void getActiveUsers(BuildContext context) async {
     }
     _locationSubscriptionOthers = _locationTracker.onLocationChanged.listen((newLocalData) async {
       if(_controller != null) {
-        DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
+        DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("users");
         final snapshot = await driversRef.get();
         final drivers = snapshot.value as Map<dynamic, dynamic>;
         drivers.forEach((key, value) async { 
@@ -187,7 +187,6 @@ void getActiveUsers(BuildContext context) async {
       debugPrint("Permission Denied");
     }
   }
-  
 }
 void notifyActiveDrivers() async {
   DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
