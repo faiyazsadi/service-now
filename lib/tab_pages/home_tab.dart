@@ -1,5 +1,3 @@
-// ignore_for_file: prefer_typing_uninitialized_variables
-
 import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
@@ -36,7 +34,7 @@ class _HomeTabPageState extends State<HomeTabPage> {
     PolylineId id = const PolylineId("poly");
     Polyline polyline = Polyline(
         polylineId: id,
-        color: Colors.red,
+        color: Colors.blue,
         points: polylineCoordinates
     );
     polylines[id] = polyline;
@@ -210,27 +208,11 @@ void notifyActiveDrivers() async {
     getCurrentLocation(context);
     getActiveUsers(context);
 
-    // print("===================================");
-    // print(widget.latitude);
-    // print(widget.longitude);
-    // print(widget.changedScreen);
-    // print("===================================");
-
-    // print("###############################");
-    // print(myLatitude);
-    // print(myLongitude);
-    // print("###############################");
-
     if(widget.changedScreen == true) {
       PointLatLng myLocation = PointLatLng(widget.myLatitude, widget.myLongitude);
       PointLatLng userLocation = PointLatLng(widget.userLatitude, widget.userLongitude);
       makeLines(myLocation, userLocation);
-      
-      // PointLatLng userLocation = PointLatLng(22.8988367, 89.50415);
-      // PointLatLng myLocation = PointLatLng(22.8988367, 89.50415);
-      
     }
-    
   }
   @override
   void dispose() {

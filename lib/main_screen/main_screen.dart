@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:elegant_notification/elegant_notification.dart';
 import 'package:elegant_notification/resources/arrays.dart';
 import 'package:firebase_database/firebase_database.dart';
