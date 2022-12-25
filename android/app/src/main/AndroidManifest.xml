@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.service_now">
    <application
-        android:label="service_now"
+        android:label="Service Now (Provider)"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

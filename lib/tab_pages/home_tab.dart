@@ -59,8 +59,8 @@ class _HomeTabPageState extends State<HomeTabPage> {
    });
  }
 
-  final CameraPosition initialLocation = const CameraPosition(
-    target: LatLng(37.42796133580664, -122.085749655962),
+  static CameraPosition initialLocation = const CameraPosition(
+    target: LatLng(22.899185265097515, 89.5051113558963),
     zoom: 14.4746,
   );
   
@@ -100,6 +100,19 @@ void getCurrentLocation(BuildContext context) async {
     try {
       Uint8List imageData = await getMarker(context);
       var location = await _locationTracker.getLocation();
+
+      setState(() {
+        initialLocation = CameraPosition(
+            target: LatLng(location.latitude!, location.longitude!),
+            zoom: 18.00
+        );
+        _controller!.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
+            bearing: 192.8334901395799,
+            target: LatLng(location.latitude!, location.longitude!),
+            tilt: 0,
+            zoom: 18.00)));
+      });
+
       updateMarkerAndCircle(location, imageData, currentFirebaseuser!.uid);
       DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
       driversRef.child(currentFirebaseuser!.uid).update({"latitude": location.latitude, "longitude": location.longitude});
@@ -114,9 +127,9 @@ void getCurrentLocation(BuildContext context) async {
 
       _locationSubscription = _locationTracker.onLocationChanged.listen((newLocalData) {
         if (_controller != null) {
-          driversRef.child(currentFirebaseuser!.uid).update({"latitude": newLocalData.latitude, "longitude": newLocalData.longitude});
-          DatabaseReference userConnection = FirebaseDatabase.instance.ref().child("drivers/${currentFirebaseuser!.uid}/isActive");
-          userConnection.onDisconnect().set(false);
+          //driversRef.child(currentFirebaseuser!.uid).update({"latitude": newLocalData.latitude, "longitude": newLocalData.longitude});
+          //DatabaseReference userConnection = FirebaseDatabase.instance.ref().child("drivers/${currentFirebaseuser!.uid}/isActive");
+          //userConnection.onDisconnect().set(false);
           _controller!.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
               bearing: 192.8334901395799,
               target: LatLng(newLocalData.latitude!, newLocalData.longitude!),
@@ -227,10 +240,45 @@ void notifyActiveDrivers() async {
   Widget build(BuildContext context) {
     return  Scaffold(
       appBar: AppBar(
-        title: const Text("Google Map"),
+
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //     const SnackBar(content: Text('This is a snackbar')));
+
+        leading: Builder(
+          builder: (BuildContext context) {
+            return Container(
+                child: Icon(Icons.miscellaneous_services_sharp)
+            );
+          },
+        ),
+        title: Text("Car Service",
+          style: TextStyle(
+            fontSize: 25,
+            fontFamily: "Ubuntu",
+          ),),
+        centerTitle: false,
+        backgroundColor: Colors.red.shade900,
+        foregroundColor: Colors.white,
+        elevation: 25,
+        toolbarHeight: 60,
+        actions: <Widget>[
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [BoxShadow(blurRadius: 5, color: Colors.grey.shade900, spreadRadius: 0)],
+            ),
+            child: CircleAvatar(
+              backgroundColor: Colors.white,
+              backgroundImage: AssetImage("images/service_now_logo.jpeg"),
+              radius: 18,
+            ),
+          ),
+
+          SizedBox(width: 15,),
+        ],
       ),
       body: GoogleMap(
-        mapType: MapType.hybrid,
+        mapType: MapType.normal,
         initialCameraPosition: initialLocation,
         onMapCreated: (GoogleMapController controller) {
           _controller = controller;
@@ -243,31 +291,31 @@ void notifyActiveDrivers() async {
         polylines: Set<Polyline>.of(polylines.values),
       ),
       
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Row(
-          children: [
-            ElevatedButton(
-              onPressed: () {
-                notifyActiveDrivers();
-              },
-              child: const Text('Request Help'),
-              style: ElevatedButton.styleFrom(
-                  // icon: 
-                  backgroundColor: Colors.deepPurple[700],
-            ),
-            ),
-            SizedBox(width: 200),
-            FloatingActionButton(
-              child: const Icon(Icons.location_searching),
-              onPressed: () {
-                getCurrentLocation(context);
-                getActiveUsers(context);
-              }
-            ),
-          ],
-        ),
-      )
+      // floatingActionButton: Padding(
+      //   padding: const EdgeInsets.all(8.0),
+      //   child: Row(
+      //     children: [
+      //       ElevatedButton(
+      //         onPressed: () {
+      //           notifyActiveDrivers();
+      //         },
+      //         child: const Text('Request Help'),
+      //         style: ElevatedButton.styleFrom(
+      //             // icon:
+      //             backgroundColor: Colors.deepPurple[700],
+      //       ),
+      //       ),
+      //       SizedBox(width: 200),
+      //       FloatingActionButton(
+      //         child: const Icon(Icons.location_searching),
+      //         onPressed: () {
+      //           getCurrentLocation(context);
+      //           getActiveUsers(context);
+      //         }
+      //       ),
+      //     ],
+      //   ),
+      // )
     );
   }
 }

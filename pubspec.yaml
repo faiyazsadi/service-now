@@ -47,6 +47,11 @@ dependencies:
   location: ^4.4.0
   flutter_svg: ^1.1.6
   elegant_notification: ^1.6.4
+  flutter_spinkit: ^5.1.0
+#  pinput: ^2.2.16
+  image_picker: ^0.8.6
+  firebase_storage: ^11.0.9
+
 
 dev_dependencies:
   flutter_test:
@@ -74,6 +79,13 @@ flutter:
   assets:
     - images/
 
+  fonts:
+    - family: Ubuntu
+      fonts:
+        - asset: fonts/Ubuntu-Regular.ttf
+    - family: FredokaOne
+      fonts:
+        - asset: fonts/FredokaOne-Regular.ttf
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
 

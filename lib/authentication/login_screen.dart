@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:service_now/authentication/sign_up_screen.dart';
+import 'package:service_now/main_screen/main_screen.dart';
 import 'package:service_now/splash_screen/splash_screen.dart';
 
 import '../global/global.dart';
@@ -51,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
       currentFirebaseuser = firebaseUser;
       Fluttertoast.showToast(msg: 'Account has been created.');
       Navigator.push(
-          context, MaterialPageRoute(builder: (c) => const MySplashScreen()));
+          context, MaterialPageRoute(builder: (c) => const MainScreen()));
     } else {
       Navigator.pop(context);
       Fluttertoast.showToast(msg: 'Error occured while logging in.');
@@ -163,7 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => SignUpScreen(),
+                      builder: (context) => SignUpScreen(phone: "+8801881445979"),
                     ),
                   );
                 },
