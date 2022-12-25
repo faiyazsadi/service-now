@@ -225,6 +225,8 @@ void notifyActiveDrivers() async {
   }
   @override
   Widget build(BuildContext context) {
+    DatabaseReference ref = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("isBusy");
+    final snapshot = ref.get().asStream();
     return  Scaffold(
       appBar: AppBar(
         title: const Text("Google Map"),
@@ -247,6 +249,23 @@ void notifyActiveDrivers() async {
         padding: const EdgeInsets.all(8.0),
         child: Row(
           children: [
+            StreamBuilder(
+              stream: snapshot,
+              builder: (BuildContext context, AsyncSnapshot<DataSnapshot> snapshot) {
+                if(snapshot.hasData) {
+                  currDriverStatus = snapshot.data!.value.toString();
+                  print("||||||||||||||||||||||||||||");
+                  print(currDriverStatus);
+                  print("||||||||||||||||||||||||||||");
+                  if(prevDriverStatus == "true" && currDriverStatus == "false") {
+                    polylines.clear();
+                    polylineCoordinates.clear();
+                  }
+                  prevDriverStatus = currDriverStatus;
+                }
+                return const Text("");
+              }
+            ),
             ElevatedButton(
               onPressed: () {
                 notifyActiveDrivers();

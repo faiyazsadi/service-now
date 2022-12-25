@@ -64,7 +64,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
         "phone": phoneTextEditingController.text.trim(),
         "isActive": false,
         "latitude": 123,
-        "longitude": 123
+        "longitude": 123,
+        "isBusy": false
       };
       DatabaseReference driversRef =
           FirebaseDatabase.instance.ref().child("drivers");

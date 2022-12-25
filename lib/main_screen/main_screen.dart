@@ -57,6 +57,8 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
           ElevatedButton(
             onPressed: () async { 
               // getUserLocation();
+              DatabaseReference statusRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("isBusy");
+              statusRef.set(true);
               DatabaseReference mylatRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("latitude");
               DatabaseReference mylonRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("longitude");
               final mylat = await mylatRef.get();

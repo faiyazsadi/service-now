@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:service_now/authentication/sign_up_screen.dart';
@@ -24,6 +25,8 @@ class _LoginScreenState extends State<LoginScreen> {
       Fluttertoast.showToast(msg: 'Password is required.');
     } else {
       loginDriver();
+      DatabaseReference driverRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("isBusy");
+      driverRef.set(false);
     }
   }
 
