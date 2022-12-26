@@ -113,7 +113,8 @@ void getCurrentLocation(BuildContext context) async {
             tilt: 0,
             zoom: 18.00)));
       });
-
+      print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+      print(currentFirebaseuser!.uid);
       updateMarkerAndCircle(location, imageData, currentFirebaseuser!.uid);
       DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
       driversRef.child(currentFirebaseuser!.uid).update({"latitude": location.latitude, "longitude": location.longitude});
@@ -128,9 +129,9 @@ void getCurrentLocation(BuildContext context) async {
 
       _locationSubscription = _locationTracker.onLocationChanged.listen((newLocalData) {
         if (_controller != null) {
-          //driversRef.child(currentFirebaseuser!.uid).update({"latitude": newLocalData.latitude, "longitude": newLocalData.longitude});
-          //DatabaseReference userConnection = FirebaseDatabase.instance.ref().child("drivers/${currentFirebaseuser!.uid}/isActive");
-          //userConnection.onDisconnect().set(false);
+          driversRef.child(currentFirebaseuser!.uid).update({"latitude": newLocalData.latitude, "longitude": newLocalData.longitude});
+          DatabaseReference userConnection = FirebaseDatabase.instance.ref().child("drivers/${currentFirebaseuser!.uid}/isActive");
+          userConnection.onDisconnect().set(false);
           _controller!.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
               bearing: 192.8334901395799,
               target: LatLng(newLocalData.latitude!, newLocalData.longitude!),
@@ -160,17 +161,13 @@ void getActiveUsers(BuildContext context) async {
         drivers.forEach((key, value) async { 
           if(value["isActive"] == true) {
             var uid = value["id"];
-            if(value["id"] != currentFirebaseuser!.uid) { 
-              // print("===============================");
-              // print("uid: " + uid);
-              // print("===============================");
+            if(value["id"] != currentFirebaseuser!.uid) {
               Uint8List imageData = await getMarker(context);
               var latitude = value["latitude"];
               var longitude = value["longitude"];
               LatLng latLng = LatLng(latitude, longitude);
               setState(() {
-                // print(uid);
-                // print("==========================");
+
                 var m = Marker(
                     markerId: MarkerId(uid),
                     position: latLng,
@@ -222,7 +219,6 @@ void notifyActiveDrivers() async {
     final user = await (driversRef.child("name")).get();
     final imageUrl = await (driversRef.child("image")).get();
 
-
     setState(() {
       user_name = user!.value.toString();
       urlImage = imageUrl!.value.toString();
@@ -234,6 +230,19 @@ void notifyActiveDrivers() async {
   String urlImage = "https://firebasestorage.googleapis.com/v0/b/emergency-service-d0d19.appspot.com/o/images%2Floading.png?alt=media&token=f1bd6f13-b2c8-4f88-b14a-b2581d01ee84";
   String user_name = "";
 
+  String? usr_name, user_phone_no, user_image;
+
+  void getUserInfo() async {
+    DatabaseReference userRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("request_from");
+    final userid = await userRef.get();
+    DatabaseReference uRef = FirebaseDatabase.instance.ref().child("users").child(userid.value.toString());
+    final user_name_snap = await uRef.child("name").get();
+    final user_phone_no_snap = await uRef.child("phone").get();
+    final user_image_snap = await uRef.child("image").get();
+    usr_name = user_name_snap.value.toString();
+    user_phone_no = user_phone_no_snap.toString();
+    user_image = user_image_snap.value.toString();
+  }
 
 @override
   initState() {
@@ -242,11 +251,12 @@ void notifyActiveDrivers() async {
     getCurrentLocation(context);
     getActiveUsers(context);
 
-    if(widget.changedScreen == true) {
-      PointLatLng myLocation = PointLatLng(widget.myLatitude, widget.myLongitude);
-      PointLatLng userLocation = PointLatLng(widget.userLatitude, widget.userLongitude);
-      makeLines(myLocation, userLocation);
-    }
+    // if(widget.changedScreen == true) {
+    //   PointLatLng myLocation = PointLatLng(widget.myLatitude, widget.myLongitude);
+    //   PointLatLng userLocation = PointLatLng(widget.userLatitude, widget.userLongitude);
+    //   getUserInfo();
+    //   makeLines(myLocation, userLocation);
+    // }
   }
   @override
   void dispose() {

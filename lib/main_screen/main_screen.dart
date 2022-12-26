@@ -3,7 +3,9 @@ import 'package:elegant_notification/elegant_notification.dart';
 import 'package:elegant_notification/resources/arrays.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:service_now/global/global.dart';
+import 'package:service_now/tab_pages/Accept.dart';
 import 'package:service_now/tab_pages/earning_tab.dart';
 import 'package:service_now/tab_pages/home_tab.dart';
 import 'package:service_now/tab_pages/profile_tab.dart';
@@ -70,6 +72,44 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
       print(userLongitude);
       print("=====================");
   }
+
+  void alreadyAccepted(BuildContext context) {
+    showDialog(context: context, builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text("Opssss !!",
+          style: TextStyle(
+            fontSize: 25,
+            color: Colors.red.shade900,
+            fontFamily: "FredokaOne",
+          ),),
+        content: const Text('Request is Already Accepted!',
+          style: TextStyle(
+              fontSize: 20.0,
+              fontFamily: "Ubuntu"
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: (){
+                Navigator.of(context).pop();
+                Navigator.push(context, MaterialPageRoute(builder: ((context) => HomeTabPage(myLatitude: myLatitude,
+                  myLongitude: myLongitude,
+                  userLatitude: userLatitude,
+                  userLongitude: userLongitude,
+                  changedScreen: changedScreen,))));
+              },
+              child: Text("OK",
+                style: TextStyle(
+                  fontFamily: "Ubuntu",
+                  fontSize: 20.0,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red.shade900,
+                ),)),
+        ],
+      );
+    });
+  }
+
   void getNotification(BuildContext context, var userName) {
     ElegantNotification.info(
       width: 360,
@@ -85,6 +125,15 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
           ElevatedButton(
             onPressed: () async { 
               // getUserLocation();
+              DatabaseReference requestRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("request_from");
+              final request_from = await requestRef.get();
+              DatabaseReference statRef= FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString()).child("alreadyAccepted");
+              final userStatus = await statRef.get();
+              if(userStatus.value == true) {
+                alreadyAccepted(context);
+                // Navigator.push(context, MaterialPageRoute(builder: ((context) => MainScreen())));
+                return;
+              }
               DatabaseReference statusRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("isBusy");
               statusRef.set(true);
               DatabaseReference mylatRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("latitude");
@@ -95,20 +144,18 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
                 myLongitude = mylon.value
               });
 
-              DatabaseReference requestRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("request_from");
-              final request_from = await requestRef.get();
-
               DatabaseReference latRef = FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString()).child("latitude");
               DatabaseReference lonRef = FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString()).child("longitude");
               DatabaseReference driverRef = FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString());
               driverRef.update({"AcceptedBy": currentFirebaseuser!.uid});
               driverRef.update({"AcceptTime": DateTime.now().toString()});
+              driverRef.update({"alreadyAccepted": true});
               final lat = await latRef.get();
               final lon = await lonRef.get().then((lon) => {
                 userLatitude = lat.value,
                 userLongitude = lon.value,
                 changedScreen = true,
-                Navigator.push(context, MaterialPageRoute(builder: (c) => HomeTabPage(
+                Navigator.push(context, MaterialPageRoute(builder: (c) => Accept(
                   myLatitude: myLatitude,
                   myLongitude: myLongitude,
                   userLatitude: userLatitude,
@@ -140,7 +187,9 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
           ),
         ],
       ), 
-      onActionPressed: () {},
+      onActionPressed: () {
+        Navigator.pop(context);
+      },
       showProgressIndicator: true,
       onDismiss: () {
         print(
@@ -164,6 +213,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
         final userName = await userRef.get();
         getNotification(context, userName.value.toString());
         print(userName.value);
+
       }
     });
   }

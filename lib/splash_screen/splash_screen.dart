@@ -30,7 +30,8 @@ class _MySplashScreenState extends State<MySplashScreen> {
             driversRef.child(currentFirebaseuser!.uid).update({"isActive": true});
       } else {
         Navigator.push(
-            context, MaterialPageRoute(builder: ((context) => Phone())));
+            // context, MaterialPageRoute(builder: ((context) => Phone())));
+            context, MaterialPageRoute(builder: ((context) => SignUpScreen(phone: '01532175616'))));
       }
     });
   }

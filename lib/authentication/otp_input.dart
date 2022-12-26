@@ -150,6 +150,7 @@ class _MyOtpState extends State<MyOtp> {
                           Navigator.push(context, MaterialPageRoute(builder: ((context) => MainScreen())));
                         }
                       });
+                      Navigator.push(context, MaterialPageRoute(builder: ((context) => SignUpScreen(phone: phone))));
                     }
                     catch(e){
                       showDialog(context: context, builder: (BuildContext contest){

@@ -213,7 +213,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return;
     }
     if (firebaseUser != null) {
-      print("|||||||||||||||||||||||||||||||||||||||");
       Map driverMap = {
         "id": firebaseUser.uid,
         "name": nameTextEditingController.text.trim(),
@@ -259,7 +258,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
 
     } else {
-      print("|||||||||||||||||||||||||||||||||||||||");
       Navigator.pop(context);
       showDialog(context: context, builder: (BuildContext contest){
         return AlertDialog(
