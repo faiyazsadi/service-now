@@ -27,11 +27,39 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
   var userLatitude, userLongitude;
   var changedScreen = false;
 
+  void fetchData() async{
+    DatabaseReference  driversRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid);
+    final user = await (driversRef.child("name")).get();
+    final imageUrl = await (driversRef.child("image")).get();
+    final userEmail = await (driversRef.child("email")).get();
+    final userType = await (driversRef.child("type")).get();
+    final userPhone = await (driversRef.child("phone")).get();
+
+
+    setState(() {
+      user_name = user!.value.toString();
+      user_email = userEmail.value.toString();
+      user_phone = userPhone.value.toString();
+      urlImage = imageUrl!.value.toString();
+      user_type = userType.value.toString();
+
+      //print("after setting: ${urlImage}");
+    });
+  }
+
+  String user_email = "loading.....";
+  String user_phone = "loading.....";
+  String urlImage = "https://png.pngtree.com/png-vector/20210309/ourlarge/pngtree-not-loaded-during-loading-png-image_3022825.jpg";
+  String user_name = "";
+  String user_type = "";
+
   Future<void> getUserLocation() async {
       DatabaseReference requestRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("request_from");
       final request_from = await requestRef.get();
       DatabaseReference latRef = FirebaseDatabase.instance.ref().child("drivers").child(request_from.value.toString()).child("latitude");
       DatabaseReference lonRef = FirebaseDatabase.instance.ref().child("drivers").child(request_from.value.toString()).child("longitude");
+
+
       final lat = await latRef.get();
       final lon = await lonRef.get();
       sleep(Duration(milliseconds: 1000));
@@ -57,6 +85,8 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
           ElevatedButton(
             onPressed: () async { 
               // getUserLocation();
+              DatabaseReference statusRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("isBusy");
+              statusRef.set(true);
               DatabaseReference mylatRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("latitude");
               DatabaseReference mylonRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("longitude");
               final mylat = await mylatRef.get();
@@ -83,7 +113,8 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
                   myLongitude: myLongitude,
                   userLatitude: userLatitude,
                   userLongitude: userLongitude,
-                  changedScreen: changedScreen)))
+                  changedScreen: changedScreen,
+                )))
                   .then((value) => changedScreen = false)
               });
             }
@@ -136,11 +167,13 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
       }
     });
   }
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    tabController = TabController(length: 4, vsync: this);
+    fetchData();
+    tabController = TabController(length: 3, vsync: this);
     checkForRequests();
   }
 
@@ -151,18 +184,15 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
         physics: NeverScrollableScrollPhysics(),
         controller: tabController,
         children: [
-          HomeTabPage(myLatitude: myLatitude, myLongitude: myLongitude, userLatitude: userLatitude, userLongitude: userLongitude, changedScreen: changedScreen),
-          EarningsTabPage(),
-          RatingTabPage(),
-          ProfileTabPage(),
+          HomeTabPage(myLatitude: myLatitude, myLongitude: myLongitude, userLatitude: userLatitude, userLongitude: userLongitude, changedScreen: changedScreen,),
+          EarningsTabPage(urlImage: urlImage,),
+          ViewProfile(name: user_name, phone: user_phone, email: user_email, urlImage: urlImage, type: user_type),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.credit_card), label: 'Earning'),
-          BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Rating'),
+          BottomNavigationBarItem(icon: Icon(Icons.credit_card), label: 'Earning'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Account'),
         ],
         unselectedItemColor: Colors.white54,

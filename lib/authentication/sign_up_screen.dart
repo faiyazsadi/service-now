@@ -224,7 +224,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
         "isBusy": false,
         "latitude": 123,
         "longitude": 123,
-        "type":selectedCarType,
+        "type": selectedCarType,
+        "isBusy": false
       };
       DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
       driversRef.child(firebaseUser.uid).set(driverMap);
@@ -342,7 +343,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       ),
                                     ),
                                   )
-                                      : Icon(Icons.person_add_alt_1_rounded,
+                                      : Icon(Icons.person,
                                     size: 60,
                                     color: Colors.white,)
                               ),

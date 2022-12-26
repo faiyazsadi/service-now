@@ -8,6 +8,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:service_now/global/global.dart';
 
+import '../splash_screen/splash_screen.dart';
+
 
 class HomeTabPage extends StatefulWidget {
   final myLatitude, myLongitude, userLatitude, userLongitude;
@@ -63,7 +65,6 @@ class _HomeTabPageState extends State<HomeTabPage> {
     target: LatLng(22.899185265097515, 89.5051113558963),
     zoom: 14.4746,
   );
-  
 
   Future<Uint8List> getMarker(BuildContext context) async {
     ByteData byteData = await DefaultAssetBundle.of(context).load("images/car_icon.png");
@@ -201,6 +202,7 @@ void getActiveUsers(BuildContext context) async {
     }
   }
 }
+
 void notifyActiveDrivers() async {
   DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
   final snapshot = await driversRef.get();
@@ -214,9 +216,29 @@ void notifyActiveDrivers() async {
     }
   });
 }
-  @override 
+
+  void fetchData() async{
+    DatabaseReference  driversRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid);
+    final user = await (driversRef.child("name")).get();
+    final imageUrl = await (driversRef.child("image")).get();
+
+
+    setState(() {
+      user_name = user!.value.toString();
+      urlImage = imageUrl!.value.toString();
+
+      //print("after setting: ${urlImage}");
+    });
+  }
+
+  String urlImage = "https://firebasestorage.googleapis.com/v0/b/emergency-service-d0d19.appspot.com/o/images%2Floading.png?alt=media&token=f1bd6f13-b2c8-4f88-b14a-b2581d01ee84";
+  String user_name = "";
+
+
+@override
   initState() {
     super.initState();
+    fetchData();
     getCurrentLocation(context);
     getActiveUsers(context);
 
@@ -238,6 +260,8 @@ void notifyActiveDrivers() async {
   }
   @override
   Widget build(BuildContext context) {
+    DatabaseReference ref = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("isBusy");
+    final snapshot = ref.get().asStream();
     return  Scaffold(
       appBar: AppBar(
 
@@ -246,12 +270,34 @@ void notifyActiveDrivers() async {
 
         leading: Builder(
           builder: (BuildContext context) {
-            return Container(
-                child: Icon(Icons.miscellaneous_services_sharp)
-            );
+            return CircleAvatar(
+                backgroundColor: Colors.red.shade900,
+                child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(width: 2.3, color: Colors.white),
+                      shape: BoxShape.circle,
+                    ),
+                    child: urlImage != null ? Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(500),
+                        child: Image.network(urlImage,
+                          height: 35,
+                          width: 35,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    )
+                        : Icon(Icons.person,
+                      size: 15,
+                      color: Colors.black,)
+                ),
+                radius: 5.0,
+              );
           },
         ),
-        title: Text("Car Service",
+
+        title: Text(user_name,
           style: TextStyle(
             fontSize: 25,
             fontFamily: "Ubuntu",
@@ -262,18 +308,76 @@ void notifyActiveDrivers() async {
         elevation: 25,
         toolbarHeight: 60,
         actions: <Widget>[
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [BoxShadow(blurRadius: 5, color: Colors.grey.shade900, spreadRadius: 0)],
-            ),
-            child: CircleAvatar(
-              backgroundColor: Colors.white,
-              backgroundImage: AssetImage("images/service_now_logo.jpeg"),
-              radius: 18,
-            ),
-          ),
+          IconButton(
+            onPressed: (){
+              showDialog(context: context, builder: (BuildContext contest){return AlertDialog(
+                title: Text("Warning !!",
+                  style: TextStyle(
+                    fontSize: 28.0,
+                    color: Colors.red.shade900,
+                    fontFamily: "FredokaOne",
+                  ),),
+                content: Padding(
+                  padding: const EdgeInsets.only(left: 0.0, right: 10.0, top: 10.0),
+                  child: Text('Are you sure to sign out?',
+                    style: TextStyle(
+                      fontSize: 23.0,
+                      color: Colors.black45,
+                      fontFamily: "Ubuntu",
+                    ),
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                      onPressed: () {
+                        DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
+                        driversRef.child(currentFirebaseuser!.uid).update({"isActive": false});
+                        fAuth.signOut();
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: ((context) => const MySplashScreen())));
+                      },
+                      child: Text(
+                        "YES",
+                        style: TextStyle(
+                          fontSize: 20.0,
+                          color: Colors.red.shade900,
+                          fontFamily: "Ubuntu",
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                  ),
+                  TextButton(onPressed:(){
+                    Navigator.of(context).pop();
+                  },
+                      child: Text(
+                        "No",
+                        style: TextStyle(
+                          fontSize: 20.0,
+                          color: Colors.red.shade900,
+                          fontFamily: "Ubuntu",
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                  ),
+                  SizedBox(width: 0,)
+                ],
+              );});
+            },
+            icon: Icon(Icons.logout_rounded,
+              size: 30,),
+            // onPressed: () {
+            //   DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
+            //   driversRef.child(currentFirebaseuser!.uid).update({"isActive": false});
+            //   fAuth.signOut();
+            //   Navigator.push(
+            //       context,
+            //       MaterialPageRoute(
+            //           builder: ((context) => const MySplashScreen())));
+            // },
 
+          ),
           SizedBox(width: 15,),
         ],
       ),
@@ -291,6 +395,7 @@ void notifyActiveDrivers() async {
         polylines: Set<Polyline>.of(polylines.values),
       ),
       
+// <<<<<<< HEAD
       // floatingActionButton: Padding(
       //   padding: const EdgeInsets.all(8.0),
       //   child: Row(
@@ -316,6 +421,54 @@ void notifyActiveDrivers() async {
       //     ],
       //   ),
       // )
+// =======
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Row(
+          children: [
+            StreamBuilder(
+              stream: snapshot,
+              builder: (BuildContext context, AsyncSnapshot<DataSnapshot> snapshot) {
+                if(snapshot.hasData) {
+                  currDriverStatus = snapshot.data!.value.toString();
+                  print(currDriverStatus);
+                  if(prevDriverStatus == "true" && currDriverStatus == "false") {
+                    polylines.clear();
+                    polylineCoordinates.clear();
+                  }
+                  prevDriverStatus = currDriverStatus;
+                }
+                return const Text("");
+              }
+            ),
+
+            // ElevatedButton(
+            //   onPressed: () {
+            //     notifyActiveDrivers();
+            //   },
+            //   child: const Text('Request Help'),
+            //   style: ElevatedButton.styleFrom(
+            //       // icon:
+            //       backgroundColor: Colors.deepPurple[700],
+            // ),
+            // ),
+
+            SizedBox(width: 200),
+            Padding(
+              padding: const EdgeInsets.all(60.0),
+              child: FloatingActionButton(
+                backgroundColor: Colors.red.shade900,
+                child: const Icon(Icons.location_on_rounded),
+                onPressed: () {
+                  //print("Mahim");
+                  getCurrentLocation(context);
+                  getActiveUsers(context);
+                }
+              ),
+            ),
+          ],
+        ),
+      )
     );
   }
 }

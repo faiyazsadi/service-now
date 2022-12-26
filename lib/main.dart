@@ -12,6 +12,7 @@ void main() async {
   runApp(
     MyApp(
       child: MaterialApp(
+        debugShowMaterialGrid: false,
       title: 'Service Now',
       theme: ThemeData(
         primarySwatch: Colors.blue,

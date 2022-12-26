@@ -4,17 +4,16 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:service_now/authentication/login_screen.dart';
+import 'package:service_now/authentication/phone_number.dart';
 import 'package:service_now/global/global.dart';
 import 'package:service_now/main_screen/main_screen.dart';
 import 'dart:io';
 
 import '../authentication/sign_up_screen.dart';
-
-
+import '../tab_pages/profile_tab.dart';
 
 class MySplashScreen extends StatefulWidget {
   const MySplashScreen({super.key});
-
   @override
   State<MySplashScreen> createState() => _MySplashScreenState();
 }
@@ -31,7 +30,7 @@ class _MySplashScreenState extends State<MySplashScreen> {
             driversRef.child(currentFirebaseuser!.uid).update({"isActive": true});
       } else {
         Navigator.push(
-            context, MaterialPageRoute(builder: ((context) => LoginScreen())));
+            context, MaterialPageRoute(builder: ((context) => Phone())));
       }
     });
   }
@@ -75,7 +74,7 @@ class _MySplashScreenState extends State<MySplashScreen> {
                 ),
               ),
               SizedBox(height: 20,),
-              Text("Driver App",
+              Text("Provider App",
               style: TextStyle(
                 fontSize: 20,
                 color: Colors.white,

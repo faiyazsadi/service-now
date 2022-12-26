@@ -48,9 +48,9 @@ dependencies:
   flutter_svg: ^1.1.6
   elegant_notification: ^1.6.4
   flutter_spinkit: ^5.1.0
-#  pinput: ^2.2.16
   image_picker: ^0.8.6
   firebase_storage: ^11.0.9
+  pinput: ^2.2.16
 
 
 dev_dependencies:
