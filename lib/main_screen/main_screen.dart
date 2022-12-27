@@ -198,6 +198,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
       },
     ).show(context);
   }
+
   bool firstTime = true;
   void checkForRequests() async {
     DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("request_time");
@@ -207,13 +208,13 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
         firstTime = false;
         // print("FIRST TIME");
       } else {
+        print("OOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
         DatabaseReference requestRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("request_from");
         final request_from = await requestRef.get();
         DatabaseReference userRef = FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString()).child("name");
         final userName = await userRef.get();
         getNotification(context, userName.value.toString());
         print(userName.value);
-
       }
     });
   }
@@ -227,18 +228,48 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     checkForRequests();
   }
 
+  Future<String> getUserName() async {
+    DatabaseReference requestRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("request_from");
+    final request_from = await requestRef.get();
+    DatabaseReference userRef = FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString()).child("name");
+    final userName = await userRef.get();
+    return userName.value.toString();
+  }
+
   @override
   Widget build(BuildContext context) {
+    DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("request_time");
+    final snapshot = driversRef.get().asStream();
     return Scaffold(
       body: TabBarView(
         physics: NeverScrollableScrollPhysics(),
         controller: tabController,
         children: [
+          // StreamBuilder(
+          //     stream: snapshot,
+          //     builder: (BuildContext context, AsyncSnapshot<DataSnapshot> snapshot) {
+          //       if(snapshot.hasData) {
+          //         currReqTime = snapshot.data!.value.toString();
+          //         print(currReqTime);
+          //         if(prevReqTime == "" && currReqTime != "") {
+          //             firstTime = false;
+          //             print("=====================================");
+          //         } else if(prevReqTime != currReqTime) {
+          //             print("QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ");
+          //             var userName = getUserName();
+          //             getNotification(context, userName);
+          //         }
+          //         prevReqTime = currReqTime;
+          //       }
+          //       return const Text("");
+          //     }
+          // ),
           HomeTabPage(myLatitude: myLatitude, myLongitude: myLongitude, userLatitude: userLatitude, userLongitude: userLongitude, changedScreen: changedScreen,),
           EarningsTabPage(urlImage: urlImage,),
           ViewProfile(name: user_name, phone: user_phone, email: user_email, urlImage: urlImage, type: user_type),
         ],
       ),
+
       bottomNavigationBar: BottomNavigationBar(
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),

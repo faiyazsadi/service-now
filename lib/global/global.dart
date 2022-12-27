@@ -4,3 +4,4 @@ final FirebaseAuth fAuth = FirebaseAuth.instance;
 
 User? currentFirebaseuser;
 var currDriverStatus = "false", prevDriverStatus = "false";
+var currReqTime = "", prevReqTime = "";

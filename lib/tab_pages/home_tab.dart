@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:elegant_notification/elegant_notification.dart';
+import 'package:elegant_notification/resources/arrays.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +11,7 @@ import 'package:location/location.dart';
 import 'package:service_now/global/global.dart';
 
 import '../splash_screen/splash_screen.dart';
+import 'Accept.dart';
 
 
 class HomeTabPage extends StatefulWidget {
@@ -258,6 +261,47 @@ void notifyActiveDrivers() async {
     //   makeLines(myLocation, userLocation);
     // }
   }
+  void alreadyAccepted(BuildContext context) {
+    showDialog(context: context, builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text("Opssss !!",
+          style: TextStyle(
+            fontSize: 25,
+            color: Colors.red.shade900,
+            fontFamily: "FredokaOne",
+          ),),
+        content: const Text('Request is Already Accepted!',
+          style: TextStyle(
+              fontSize: 20.0,
+              fontFamily: "Ubuntu"
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: (){
+                Navigator.of(context).pop();
+                Navigator.push(context, MaterialPageRoute(builder: ((context) => HomeTabPage(myLatitude: myLatitude,
+                  myLongitude: myLongitude,
+                  userLatitude: userLatitude,
+                  userLongitude: userLongitude,
+                  changedScreen: changedScreen,))));
+              },
+              child: Text("OK",
+                style: TextStyle(
+                  fontFamily: "Ubuntu",
+                  fontSize: 20.0,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red.shade900,
+                ),)),
+        ],
+      );
+    });
+  }
+
+  var myLatitude, myLongitude;
+  var userLatitude, userLongitude;
+  var changedScreen = false;
+  bool firstTime = true;
   @override
   void dispose() {
     if (_locationSubscription != null) {
@@ -268,10 +312,107 @@ void notifyActiveDrivers() async {
     }
     super.dispose();
   }
+  void getNotification(BuildContext context, var userName) {
+    ElegantNotification.info(
+      width: 360,
+      notificationPosition: NotificationPosition.topCenter,
+      toastDuration: const Duration(minutes: 2),
+      animation: AnimationType.fromTop,
+      title: const Text('Info'),
+      description: Text(
+        "User $userName is Requesting",
+      ),
+      action: Row(
+        children: [
+          ElevatedButton(
+            onPressed: () async {
+              // getUserLocation();
+              DatabaseReference requestRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("request_from");
+              final request_from = await requestRef.get();
+              DatabaseReference statRef= FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString()).child("alreadyAccepted");
+              final userStatus = await statRef.get();
+              if(userStatus.value == true) {
+                alreadyAccepted(context);
+                // Navigator.push(context, MaterialPageRoute(builder: ((context) => MainScreen())));
+                return;
+              }
+              DatabaseReference statusRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("isBusy");
+              statusRef.set(true);
+              DatabaseReference mylatRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("latitude");
+              DatabaseReference mylonRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("longitude");
+              final mylat = await mylatRef.get();
+              final mylon = await mylonRef.get().then((mylon) => {
+                myLatitude = mylat.value,
+                myLongitude = mylon.value
+              });
+
+              DatabaseReference latRef = FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString()).child("latitude");
+              DatabaseReference lonRef = FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString()).child("longitude");
+              DatabaseReference driverRef = FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString());
+              driverRef.update({"AcceptedBy": currentFirebaseuser!.uid});
+              driverRef.update({"AcceptTime": DateTime.now().toString()});
+              driverRef.update({"alreadyAccepted": true});
+              final lat = await latRef.get();
+              final lon = await lonRef.get().then((lon) => {
+                userLatitude = lat.value,
+                userLongitude = lon.value,
+                changedScreen = true,
+                Navigator.push(context, MaterialPageRoute(builder: (c) => Accept(
+                  myLatitude: myLatitude,
+                  myLongitude: myLongitude,
+                  userLatitude: userLatitude,
+                  userLongitude: userLongitude,
+                  changedScreen: changedScreen,
+                )))
+                    .then((value) => changedScreen = false)
+              });
+            }
+            ,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+            ),
+            child: const Text(
+              'Accept',
+            ),
+          ),
+          const SizedBox(width: 100),
+          ElevatedButton(
+            onPressed: () {
+              print("WORKED");
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text(
+              'Decline',
+            ),
+          ),
+        ],
+      ),
+      onActionPressed: () {
+        Navigator.pop(context);
+      },
+      showProgressIndicator: true,
+      onDismiss: () {
+        print(
+          'This print will be displayed when dismissing the popup',
+        );
+      },
+    ).show(context);
+  }
+  Future<String> getUserName() async {
+    DatabaseReference requestRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("request_from");
+    final request_from = await requestRef.get();
+    DatabaseReference userRef = FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString()).child("name");
+    final userName = await userRef.get();
+    return userName.value.toString();
+  }
   @override
   Widget build(BuildContext context) {
     DatabaseReference ref = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("isBusy");
     final snapshot = ref.get().asStream();
+    DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("request_time");
+    final snap = driversRef.get().asStream();
     return  Scaffold(
       appBar: AppBar(
 
@@ -448,7 +589,25 @@ void notifyActiveDrivers() async {
                   }
                   prevDriverStatus = currDriverStatus;
                 }
-                return const Text("");
+                // return StreamBuilder(
+                //     stream: snap,
+                //     builder: (BuildContext context, AsyncSnapshot<DataSnapshot> snapshot) {
+                //       if(snapshot.hasData) {
+                //         currReqTime = snapshot.data!.value.toString();
+                //         print(currReqTime);
+                //         if(prevReqTime == "" && currReqTime != "") {
+                //           firstTime = false;
+                //           print("=====================================");
+                //         } else if(prevReqTime != currReqTime) {
+                //           print("QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ");
+                //           var userName = getUserName();
+                //           getNotification(context, userName);
+                //         }
+                //         prevReqTime = currReqTime;
+                //       }
+                      return const Text("");
+                    // }
+                // );
               }
             ),
 
