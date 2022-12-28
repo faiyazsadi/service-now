@@ -62,7 +62,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     });
   }
 
-  List<String> carTypesList = ['Car Service', 'Fuel Service', "Rent a' Car", "Courier" ];
+  List<String> carTypesList = ['Car Service', 'Fuel Service', 'Ambulance Service' ];
 
 
   void myAlert() {
@@ -226,8 +226,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
         "type": selectedCarType,
         "isBusy": false
       };
-      DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
-      driversRef.child(firebaseUser.uid).set(driverMap);
+      DatabaseReference driverRef = FirebaseDatabase.instance.ref();
+      DatabaseReference ref = driverRef;
+      if(selectedCarType == 'Car Service') {
+        ref = driverRef.child("drivers");
+      } else if(selectedCarType == 'Fuel Service') {
+        ref = driverRef.child("drivers_fuel");
+      } else if(selectedCarType == 'Ambulance Service') {
+        ref = driverRef.child("drivers_ambulance");
+      }
+      ref.child(firebaseUser.uid).set(driverMap);
       currentFirebaseuser = firebaseUser;
 
       Fluttertoast.showToast(msg: 'Account has been created.');

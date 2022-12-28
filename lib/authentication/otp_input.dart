@@ -141,14 +141,14 @@ class _MyOtpState extends State<MyOtp> {
                         print(key);
                         print(value["email"]);
                         print("||||||||||||||||||||||||||||||");
-                        if(value["phone"].toString() == phone ) {
-                          await fAuth.signInWithEmailAndPassword(email: value["email"], password: value["phone"]);
-                          currentFirebaseuser = fAuth.currentUser;
-                          print("||||||||||||||||||||||||||||||");
-                          print(currentFirebaseuser!.uid);
-                          print("||||||||||||||||||||||||||||||");
-                          Navigator.push(context, MaterialPageRoute(builder: ((context) => MainScreen())));
-                        }
+                        // if(value["phone"].toString() == phone ) {
+                        //   await fAuth.signInWithEmailAndPassword(email: value["email"], password: value["phone"]);
+                        //   currentFirebaseuser = fAuth.currentUser;
+                        //   print("||||||||||||||||||||||||||||||");
+                        //   print(currentFirebaseuser!.uid);
+                        //   print("||||||||||||||||||||||||||||||");
+                        //   Navigator.push(context, MaterialPageRoute(builder: ((context) => MainScreen())));
+                        // }
                       });
                       Navigator.push(context, MaterialPageRoute(builder: ((context) => SignUpScreen(phone: phone))));
                     }
