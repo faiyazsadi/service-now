@@ -65,6 +65,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   List<String> carTypesList = ['Car Service', 'Fuel Service', 'Ambulance Service' ];
 
 
+
   void myAlert() {
     showDialog(
         context: context,
@@ -207,11 +208,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
       // Fluttertoast.showToast(msg: 'Error: ' + msg.toString());
     })).user;
 
-    if(imageUrl.isEmpty){
-      print("something went wrong");
-      // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("PLease upload an image")));
-      return;
-    }
+    // if(imageUrl.isEmpty){
+    //   print("something went wrong");
+    //   // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("PLease upload an image")));
+    //   return;
+    // }
     if (firebaseUser != null) {
       Map driverMap = {
         "id": firebaseUser.uid,
@@ -224,7 +225,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
         "latitude": 123,
         "longitude": 123,
         "type": selectedCarType,
-        "isBusy": false
+        "sum": 0,
+        "rating": 0,
+        "ServiceCountr": 0,
       };
       DatabaseReference driverRef = FirebaseDatabase.instance.ref();
       DatabaseReference ref = driverRef;

@@ -217,7 +217,7 @@ class _AcceptState extends State<Accept> {
     });
   }
 
-  void fetchData() async{
+  void fetchData() async {
     DatabaseReference  driversRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid);
     final user = await (driversRef.child("name")).get();
     final imageUrl = await (driversRef.child("image")).get();
@@ -420,12 +420,8 @@ class _AcceptState extends State<Accept> {
                   builder: (BuildContext context, AsyncSnapshot<DataSnapshot> snapshot) {
                     if(snapshot.hasData) {
                       currDriverStatus = snapshot.data!.value.toString();
-                      print(currDriverStatus);
                       if(prevDriverStatus == "true" && currDriverStatus == "false") {
-                        // polylines.clear();
-                        // polylineCoordinates.clear();
                         prevDriverStatus = currDriverStatus;
-                        // changeScreen();
                         Fluttertoast.showToast(
                             msg: "Service Ended!",
                             toastLength: Toast.LENGTH_LONG,
@@ -435,7 +431,12 @@ class _AcceptState extends State<Accept> {
                             textColor: Colors.black,
                             fontSize: 20.0
                         );
-                        Navigator.push(context, MaterialPageRoute(builder: (c) => MainScreen()));
+                        Future.delayed(Duration.zero, () {
+                          Navigator.push(context, MaterialPageRoute(builder: (c) => MainScreen()));
+                        });
+                      }
+                      else {
+                        print("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
                       }
                     }
                     return const Text("");

@@ -110,6 +110,51 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     });
   }
 
+  void notificationBody() async {
+    DatabaseReference requestRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("request_from");
+    final request_from = await requestRef.get();
+    DatabaseReference statRef= FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString()).child("alreadyAccepted");
+    final userStatus = await statRef.get();
+    if(userStatus.value == true) {
+      alreadyAccepted(context);
+      return;
+    }
+    DatabaseReference statusRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("isBusy");
+    statusRef.set(true);
+    DatabaseReference mylatRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("latitude");
+    DatabaseReference mylonRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("longitude");
+    final mylat = await mylatRef.get();
+    final mylon = await mylonRef.get().then((mylon) => {
+      myLatitude = mylat.value,
+      myLongitude = mylon.value
+    });
+
+    DatabaseReference latRef = FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString()).child("latitude");
+    DatabaseReference lonRef = FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString()).child("longitude");
+    DatabaseReference driverRef = FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString());
+    driverRef.update({"AcceptedBy": currentFirebaseuser!.uid});
+    driverRef.update({"AcceptTime": DateTime.now().toString()});
+    driverRef.update({"alreadyAccepted": true});
+    final lat = await latRef.get();
+    final lon = await lonRef.get().then((lon) => {
+      userLatitude = lat.value,
+      userLongitude = lon.value,
+      changedScreen = true,
+      Future.delayed(Duration.zero, () {
+          Navigator.push(context, MaterialPageRoute(builder: (c) => Accept(
+          myLatitude: myLatitude,
+          myLongitude: myLongitude,
+          userLatitude: userLatitude,
+          userLongitude: userLongitude,
+          changedScreen: changedScreen,
+        ))).then((value) => changedScreen = false);
+        print("|||||||||||||||||||||||||||");
+        print("DELAYEEEDKFJ:AKFJFJAA");
+        print("|||||||||||||||||||||||||||");
+      })
+    });
+  }
+
   void getNotification(BuildContext context, var userName) {
     ElegantNotification.info(
       width: 360,
@@ -123,47 +168,8 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
       action: Row(
         children: [
           ElevatedButton(
-            onPressed: () async { 
-              // getUserLocation();
-              DatabaseReference requestRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("request_from");
-              final request_from = await requestRef.get();
-              DatabaseReference statRef= FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString()).child("alreadyAccepted");
-              final userStatus = await statRef.get();
-              if(userStatus.value == true) {
-                alreadyAccepted(context);
-                // Navigator.push(context, MaterialPageRoute(builder: ((context) => MainScreen())));
-                return;
-              }
-              DatabaseReference statusRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("isBusy");
-              statusRef.set(true);
-              DatabaseReference mylatRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("latitude");
-              DatabaseReference mylonRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("longitude");
-              final mylat = await mylatRef.get();
-              final mylon = await mylonRef.get().then((mylon) => {
-                myLatitude = mylat.value,
-                myLongitude = mylon.value
-              });
-
-              DatabaseReference latRef = FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString()).child("latitude");
-              DatabaseReference lonRef = FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString()).child("longitude");
-              DatabaseReference driverRef = FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString());
-              driverRef.update({"AcceptedBy": currentFirebaseuser!.uid});
-              driverRef.update({"AcceptTime": DateTime.now().toString()});
-              driverRef.update({"alreadyAccepted": true});
-              final lat = await latRef.get();
-              final lon = await lonRef.get().then((lon) => {
-                userLatitude = lat.value,
-                userLongitude = lon.value,
-                changedScreen = true,
-                Navigator.push(context, MaterialPageRoute(builder: (c) => Accept(
-                  myLatitude: myLatitude,
-                  myLongitude: myLongitude,
-                  userLatitude: userLatitude,
-                  userLongitude: userLongitude,
-                  changedScreen: changedScreen,
-                )))
-                  .then((value) => changedScreen = false)
-              });
+            onPressed: () { 
+              notificationBody();
             }
             ,
             style: ElevatedButton.styleFrom(
@@ -176,7 +182,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
           const SizedBox(width: 100),
           ElevatedButton(
             onPressed: () { 
-              print("WORKED");
+              Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
@@ -203,16 +209,22 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
   void checkForRequests() async {
     DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("request_time");
     driversRef.onValue.listen((event) async {
+      print("OOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+      print("OOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+      print("OOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+      print("OOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+      print("OOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
       final snapshot = await driversRef.get();
       if(firstTime) {
         firstTime = false;
         // print("FIRST TIME");
       } else {
-        print("OOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
         DatabaseReference requestRef = FirebaseDatabase.instance.ref().child("drivers").child(currentFirebaseuser!.uid).child("request_from");
         final request_from = await requestRef.get();
         DatabaseReference userRef = FirebaseDatabase.instance.ref().child("users").child(request_from.value.toString()).child("name");
         final userName = await userRef.get();
+        print("ERRORROROR");
+        // return;
         getNotification(context, userName.value.toString());
         print(userName.value);
       }
